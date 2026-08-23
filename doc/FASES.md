@@ -14,8 +14,8 @@
 | 3 | EIP-2612 Permit | Domain separator, nonces, `permit()` con ecrecover | ✅ Aprobada |
 | 4 | Optimización de gas | immutables, unchecked, constant, layout | ✅ Aprobada |
 | 5 | Tests unitarios | Cobertura ERC-20 estándar con `vm.expectRevert` | ✅ Aprobada |
-| 6 | Tests fuzz & permit | Fuzzing con `bound()`, casos EIP-2612 con `vm.sign()` | ⏸️ En espera de tu señal |
-| 7 | Revisión final | Gas report, NatSpec completo, checklist de seguridad | ⏸️ Bloqueada |
+| 6 | Tests fuzz & permit | Fuzzing con `bound()`, casos EIP-2612 con `vm.sign()` | ✅ Aprobada |
+| 7 | Revisión final | Gas report, NatSpec completo, checklist de seguridad | ⏸️ En espera de tu señal |
 
 ---
 
@@ -266,12 +266,29 @@ Cobertura (`forge coverage`):
 
 ### Criterios de aceptación
 
-- [ ] Fuzz runs ≥ 1000 sin fallos.
-- [ ] Todos los escenarios EIP-2612 de `.cursorrules` cubiertos.
+- [x] Fuzz runs ≥ 1000 sin fallos.
+- [x] Todos los escenarios EIP-2612 de `.cursorrules` cubiertos.
 
-### Aprobación requerida
+### Resultado
 
-> Responde **"Aprobado Fase 6"** para continuar.
+**26 tests** — fuzz con `--fuzz-runs 1000`:
+
+| Test | Descripción |
+|------|-------------|
+| `testFuzz_Transfer` | `bound(amount)` + recipient ≠ zero-address |
+| `testFuzz_ApproveTransferFrom` | allowances y amounts variables |
+| `testFuzz_Permit_ValidSignature` | permit válido con value/deadline fuzzed |
+| `test_Permit_WrongSigner` | firma de otro owner → `InvalidSignature` |
+| `test_Permit_*` (previos) | válida, deadline expirado, nonce inválido |
+| `test_Permit_RevertZeroAddressSpender` | spender cero post-firma válida |
+
+Helper `_signPermitWithKey` para firmas con claves arbitrarias vía `vm.sign()`.
+
+### Aprobación
+
+✅ **Aprobada** — 2026-08-23
+
+> Responde cuando quieras iniciar la **Fase 7**.
 
 ---
 

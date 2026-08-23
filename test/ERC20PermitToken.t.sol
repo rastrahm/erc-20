@@ -199,6 +199,81 @@ contract ERC20PermitTokenTest is Test {
         assertTrue(initialSeparator != forkedSeparator);
     }
 
+    // ============ Fuzz ERC-20 (Fase 6) ============
+
+    function testFuzz_Transfer(uint256 amount, address to) public {
+        vm.assume(to != address(0));
+        amount = bound(amount, 0, token.balanceOf(address(this)));
+
+        uint256 senderBefore = token.balanceOf(address(this));
+        uint256 recipientBefore = token.balanceOf(to);
+
+        assertTrue(token.transfer(to, amount));
+
+        assertEq(token.balanceOf(to), recipientBefore + amount);
+        assertEq(token.balanceOf(address(this)), senderBefore - amount);
+        assertEq(token.totalSupply(), INITIAL_SUPPLY);
+    }
+
+    function testFuzz_ApproveTransferFrom(uint256 allowanceAmount, uint256 transferAmount, address to) public {
+        vm.assume(to != address(0));
+        allowanceAmount = bound(allowanceAmount, 0, INITIAL_SUPPLY);
+        transferAmount = bound(transferAmount, 0, allowanceAmount);
+
+        token.approve(spender, allowanceAmount);
+
+        vm.prank(spender);
+        assertTrue(token.transferFrom(address(this), to, transferAmount));
+
+        assertEq(token.balanceOf(to), transferAmount);
+        assertEq(token.allowance(address(this), spender), allowanceAmount - transferAmount);
+    }
+
+    // ============ EIP-2612 adicional (Fase 6) ============
+
+    function test_Permit_WrongSigner() public {
+        uint256 value = 100 ether;
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 nonce = token.nonces(owner);
+
+        uint256 wrongPrivateKey = 0xDEADBEEF;
+        vm.assume(wrongPrivateKey != OWNER_PRIVATE_KEY);
+        vm.assume(vm.addr(wrongPrivateKey) != owner);
+
+        (uint8 v, bytes32 r, bytes32 s) =
+            _signPermitWithKey(wrongPrivateKey, owner, spender, value, nonce, deadline);
+
+        vm.expectRevert(ERC20PermitToken.InvalidSignature.selector);
+        token.permit(owner, spender, value, deadline, v, r, s);
+
+        assertEq(token.nonces(owner), nonce);
+        assertEq(token.allowance(owner, spender), 0);
+    }
+
+    function test_Permit_RevertZeroAddressSpender() public {
+        uint256 value = 100 ether;
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 nonce = token.nonces(owner);
+
+        (uint8 v, bytes32 r, bytes32 s) = _signPermit(owner, address(0), value, nonce, deadline);
+
+        vm.expectRevert(ERC20PermitToken.ZeroAddress.selector);
+        token.permit(owner, address(0), value, deadline, v, r, s);
+    }
+
+    function testFuzz_Permit_ValidSignature(uint256 value, uint256 deadlineOffset) public {
+        deadlineOffset = bound(deadlineOffset, 1, 365 days);
+        uint256 deadline = block.timestamp + deadlineOffset;
+        uint256 nonce = token.nonces(owner);
+
+        (uint8 v, bytes32 r, bytes32 s) = _signPermit(owner, spender, value, nonce, deadline);
+
+        token.permit(owner, spender, value, deadline, v, r, s);
+
+        assertEq(token.allowance(owner, spender), value);
+        assertEq(token.nonces(owner), nonce + 1);
+    }
+
     // ============ Helpers ============
 
     function _signPermit(
@@ -208,9 +283,20 @@ contract ERC20PermitTokenTest is Test {
         uint256 nonce,
         uint256 deadline
     ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
+        return _signPermitWithKey(OWNER_PRIVATE_KEY, permitOwner, permitSpender, value, nonce, deadline);
+    }
+
+    function _signPermitWithKey(
+        uint256 privateKey,
+        address permitOwner,
+        address permitSpender,
+        uint256 value,
+        uint256 nonce,
+        uint256 deadline
+    ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
         bytes32 structHash =
             keccak256(abi.encode(token.PERMIT_TYPEHASH(), permitOwner, permitSpender, value, nonce, deadline));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", token.DOMAIN_SEPARATOR(), structHash));
-        return vm.sign(OWNER_PRIVATE_KEY, digest);
+        return vm.sign(privateKey, digest);
     }
 }
