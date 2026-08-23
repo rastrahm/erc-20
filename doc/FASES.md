@@ -13,8 +13,8 @@
 | 2 | ERC-20 core | Transfer, approve, transferFrom, balanceOf, totalSupply | ✅ Aprobada |
 | 3 | EIP-2612 Permit | Domain separator, nonces, `permit()` con ecrecover | ✅ Aprobada |
 | 4 | Optimización de gas | immutables, unchecked, constant, layout | ✅ Aprobada |
-| 5 | Tests unitarios | Cobertura ERC-20 estándar con `vm.expectRevert` | ⏸️ En espera de tu señal |
-| 6 | Tests fuzz & permit | Fuzzing con `bound()`, casos EIP-2612 con `vm.sign()` | ⏸️ Bloqueada |
+| 5 | Tests unitarios | Cobertura ERC-20 estándar con `vm.expectRevert` | ✅ Aprobada |
+| 6 | Tests fuzz & permit | Fuzzing con `bound()`, casos EIP-2612 con `vm.sign()` | ⏸️ En espera de tu señal |
 | 7 | Revisión final | Gas report, NatSpec completo, checklist de seguridad | ⏸️ Bloqueada |
 
 ---
@@ -226,12 +226,28 @@ Gas report (`gas-report.txt`, gitignored): 9 tests verdes. Deploy ~756k gas.
 
 ### Criterios de aceptación
 
-- [ ] `forge test` pasa al 100%.
-- [ ] Todos los revert paths cubiertos.
+- [x] `forge test` pasa al 100%.
+- [x] Todos los revert paths cubiertos (API pública ERC-20).
 
-### Aprobación requerida
+### Resultado
 
-> Responde **"Aprobado Fase 5"** para continuar.
+**21 tests** en `ERC20PermitToken.t.sol`:
+
+| Categoría | Tests |
+|-----------|-------|
+| Positivos ERC-20 | transfer, approve, transferFrom, events, zero amount, infinite allowance |
+| Reverts ERC-20 | `InsufficientBalance`, `InsufficientAllowance`, `ZeroAddress` (to/spender) |
+
+Cobertura (`forge coverage`):
+- **Lines:** 100% en `ERC20PermitToken.sol`
+- **Functions:** 100%
+- **Branches:** 63.64% global (guards internos `from==0` / `owner==0` y paths permit pendientes para Fase 6)
+
+### Aprobación
+
+✅ **Aprobada** — 2026-08-23
+
+> Responde cuando quieras iniciar la **Fase 6**.
 
 ---
 
