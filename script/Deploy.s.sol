@@ -6,11 +6,10 @@ import {ERC20PermitToken} from "../src/ERC20PermitToken.sol";
 
 /// @title Deploy
 /// @notice Foundry deployment script for ERC20PermitToken.
-/// @dev Placeholder script for Phase 0 bootstrap.
 contract Deploy is Script {
     function run() external {
         vm.startBroadcast();
-        new ERC20PermitToken();
+        new ERC20PermitToken("ERC20 Permit Token", "EPT", 18, 1_000_000 ether);
         vm.stopBroadcast();
     }
 }
