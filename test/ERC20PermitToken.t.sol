@@ -240,8 +240,7 @@ contract ERC20PermitTokenTest is Test {
         vm.assume(wrongPrivateKey != OWNER_PRIVATE_KEY);
         vm.assume(vm.addr(wrongPrivateKey) != owner);
 
-        (uint8 v, bytes32 r, bytes32 s) =
-            _signPermitWithKey(wrongPrivateKey, owner, spender, value, nonce, deadline);
+        (uint8 v, bytes32 r, bytes32 s) = _signPermitWithKey(wrongPrivateKey, owner, spender, value, nonce, deadline);
 
         vm.expectRevert(ERC20PermitToken.InvalidSignature.selector);
         token.permit(owner, spender, value, deadline, v, r, s);
@@ -261,6 +260,19 @@ contract ERC20PermitTokenTest is Test {
         token.permit(owner, address(0), value, deadline, v, r, s);
     }
 
+    /// @dev SWC-117: rechaza componente s malleable (EIP-2).
+    function test_Permit_RevertMalleableSignature() public {
+        uint256 value = 100 ether;
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 nonce = token.nonces(owner);
+
+        (uint8 v, bytes32 r,) = _signPermit(owner, spender, value, nonce, deadline);
+        bytes32 malleableS = bytes32(uint256(0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) + 1);
+
+        vm.expectRevert(ERC20PermitToken.InvalidSignature.selector);
+        token.permit(owner, spender, value, deadline, v, r, malleableS);
+    }
+
     function testFuzz_Permit_ValidSignature(uint256 value, uint256 deadlineOffset) public {
         deadlineOffset = bound(deadlineOffset, 1, 365 days);
         uint256 deadline = block.timestamp + deadlineOffset;
@@ -276,13 +288,11 @@ contract ERC20PermitTokenTest is Test {
 
     // ============ Helpers ============
 
-    function _signPermit(
-        address permitOwner,
-        address permitSpender,
-        uint256 value,
-        uint256 nonce,
-        uint256 deadline
-    ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
+    function _signPermit(address permitOwner, address permitSpender, uint256 value, uint256 nonce, uint256 deadline)
+        internal
+        view
+        returns (uint8 v, bytes32 r, bytes32 s)
+    {
         return _signPermitWithKey(OWNER_PRIVATE_KEY, permitOwner, permitSpender, value, nonce, deadline);
     }
 
@@ -294,8 +304,9 @@ contract ERC20PermitTokenTest is Test {
         uint256 nonce,
         uint256 deadline
     ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
-        bytes32 structHash =
-            keccak256(abi.encode(token.PERMIT_TYPEHASH(), permitOwner, permitSpender, value, nonce, deadline));
+        bytes32 structHash = keccak256(
+            abi.encode(token.PERMIT_TYPEHASH(), permitOwner, permitSpender, value, nonce, deadline)
+        );
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", token.DOMAIN_SEPARATOR(), structHash));
         return vm.sign(privateKey, digest);
     }

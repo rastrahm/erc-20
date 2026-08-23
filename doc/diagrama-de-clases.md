@@ -1,6 +1,6 @@
 # Diagrama de Clases — ERC-20 Token con EIP-2612 Permit
 
-Modelo de contratos, interfaces, estado y relaciones del módulo 01.
+Modelo de contratos, interfaces, estado y relaciones del módulo 01 (implementación final).
 
 ```mermaid
 classDiagram
@@ -18,7 +18,6 @@ classDiagram
 
     class IERC20Permit {
         <<interface>>
-        +PERMIT_TYPEHASH() bytes32
         +DOMAIN_SEPARATOR() bytes32
         +nonces(address) uint256
         +permit(address, address, uint256, uint256, uint8, bytes32, bytes32) void
@@ -30,6 +29,7 @@ classDiagram
         -mapping _allowances
         -mapping _nonces
         -uint256 _totalSupply
+        -bytes32 _NAME_HASH immutable
         +string name
         +string symbol
         +uint8 decimals immutable
@@ -49,7 +49,9 @@ classDiagram
         -_transfer(address, address, uint256) internal
         -_approve(address, address, uint256) internal
         -_mint(address, uint256) internal
-        -_computeDomainSeparator() internal view
+        -_spendAllowance(address, address, uint256) internal
+        -_domainSeparator() internal view
+        -_buildDomainSeparator(uint256) internal view
         -_hashTypedDataV4(bytes32) internal view
     }
 
@@ -91,10 +93,11 @@ classDiagram
 | `_allowances` | `mapping(address => mapping(address => uint256))` | private | Aprobaciones delegadas |
 | `_nonces` | `mapping(address => uint256)` | private | Nonces EIP-2612 por owner |
 | `_totalSupply` | `uint256` | private | Supply total en circulación |
+| `_NAME_HASH` | `bytes32` | private immutable | Hash del nombre para EIP-712 |
 | `decimals` | `uint8` | immutable | Decimales del token |
 | `INITIAL_CHAIN_ID` | `uint256` | immutable | Chain ID al deploy (fork safety) |
 | `INITIAL_DOMAIN_SEPARATOR` | `bytes32` | immutable | Separator precalculado al deploy |
-| `PERMIT_TYPEHASH` | `bytes32` | constant | Hash del struct Permit |
+| `PERMIT_TYPEHASH` | `bytes32` | public constant | Hash del struct Permit |
 
 ### Funciones internas clave
 
@@ -103,7 +106,9 @@ classDiagram
 | `_transfer` | Lógica central de transferencia con guards CEI |
 | `_approve` | Establece allowance con guard de zero-address |
 | `_mint` | Mint inicial en constructor (supply al deployer) |
-| `_computeDomainSeparator` | Recalcula separator si cambia `chainid` |
+| `_spendAllowance` | Consume allowance; soporta `type(uint256).max` |
+| `_domainSeparator` | Retorna separator immutable o recalculado en fork |
+| `_buildDomainSeparator` | Construye domain separator EIP-712 |
 | `_hashTypedDataV4` | Construye digest EIP-712 para `ecrecover` |
 
 ### Relación con tests (Foundry)
@@ -115,13 +120,11 @@ classDiagram
     class ERC20PermitTokenTest {
         <<test contract>>
         +setUp()
-        +test_Transfer()
-        +test_Approve()
-        +test_TransferFrom()
-        +test_Permit_ValidSignature()
-        +test_Permit_ExpiredDeadline()
-        +test_Permit_InvalidNonce()
-        +testFuzz_Transfer(uint256, address)
+        +testFuzz_Transfer()
+        +testFuzz_ApproveTransferFrom()
+        +testFuzz_Permit_ValidSignature()
+        +test_Permit_WrongSigner()
+        +26 tests total
     }
 
     ERC20PermitTokenTest ..> ERC20PermitToken : deploys & exercises

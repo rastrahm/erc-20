@@ -14,15 +14,8 @@ interface IERC20Permit {
     /// @param v Componente de recuperación de la firma secp256k1.
     /// @param r Componente r de la firma secp256k1.
     /// @param s Componente s de la firma secp256k1.
-    function permit(
-        address owner,
-        address spender,
-        uint256 value,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external;
+    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+        external;
 
     /// @notice Devuelve el nonce actual de `owner` para firmas EIP-2612.
     /// @dev Debe incluirse en cada typed data firmado para prevenir replay.

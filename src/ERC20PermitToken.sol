@@ -6,7 +6,7 @@ import {IERC20Permit} from "./interfaces/IERC20Permit.sol";
 
 /// @title ERC20PermitToken
 /// @notice Token ERC-20 con soporte EIP-2612 permit para aprobaciones gasless.
-/// @dev Fase 4: optimizaciones de gas documentadas sin comprometer seguridad.
+/// @dev Implementación production-ready: ERC-20 + EIP-2612, CEI, custom errors, optimizada en gas.
 contract ERC20PermitToken is IERC20, IERC20Permit {
     // ============ Errors ============
 
@@ -48,8 +48,7 @@ contract ERC20PermitToken is IERC20, IERC20Permit {
     bytes32 private constant _VERSION_HASH = keccak256("1");
 
     /// @dev Mitad del orden secp256k1 para rechazar firmas malleables (EIP-2).
-    uint256 private constant _SECP256K1_HALF_ORDER =
-        0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0;
+    uint256 private constant _SECP256K1_HALF_ORDER = 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0;
 
     // ============ State Variables ============
 
@@ -143,26 +142,25 @@ contract ERC20PermitToken is IERC20, IERC20Permit {
     }
 
     /// @inheritdoc IERC20Permit
-    function permit(
-        address owner,
-        address spender,
-        uint256 value,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external {
-        if (block.timestamp > deadline) revert PermitExpired();
-        if (uint256(s) > _SECP256K1_HALF_ORDER) revert InvalidSignature();
+    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+        external
+    {
+        if (block.timestamp > deadline) {
+            revert PermitExpired();
+        }
+        if (uint256(s) > _SECP256K1_HALF_ORDER) {
+            revert InvalidSignature();
+        }
 
         uint256 nonce = _nonces[owner];
 
-        bytes32 digest = _hashTypedDataV4(
-            keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline))
-        );
+        bytes32 digest =
+            _hashTypedDataV4(keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline)));
 
         address recovered = ecrecover(digest, v, r, s);
-        if (recovered != owner || recovered == address(0)) revert InvalidSignature();
+        if (recovered != owner || recovered == address(0)) {
+            revert InvalidSignature();
+        }
 
         unchecked {
             _nonces[owner] = nonce + 1;
@@ -178,11 +176,17 @@ contract ERC20PermitToken is IERC20, IERC20Permit {
     /// @param to Destinatario.
     /// @param amount Cantidad a transferir.
     function _transfer(address from, address to, uint256 amount) internal {
-        if (from == address(0)) revert ZeroAddress();
-        if (to == address(0)) revert ZeroAddress();
+        if (from == address(0)) {
+            revert ZeroAddress();
+        }
+        if (to == address(0)) {
+            revert ZeroAddress();
+        }
 
         uint256 fromBalance = _balances[from];
-        if (fromBalance < amount) revert InsufficientBalance();
+        if (fromBalance < amount) {
+            revert InsufficientBalance();
+        }
 
         unchecked {
             _balances[from] = fromBalance - amount;
@@ -197,7 +201,9 @@ contract ERC20PermitToken is IERC20, IERC20Permit {
     /// @param to Cuenta receptora del mint.
     /// @param amount Cantidad a acuñar.
     function _mint(address to, uint256 amount) internal {
-        if (to == address(0)) revert ZeroAddress();
+        if (to == address(0)) {
+            revert ZeroAddress();
+        }
 
         unchecked {
             _totalSupply += amount;
@@ -212,8 +218,12 @@ contract ERC20PermitToken is IERC20, IERC20Permit {
     /// @param spender Dirección autorizada.
     /// @param amount Nuevo límite de allowance.
     function _approve(address owner, address spender, uint256 amount) internal {
-        if (owner == address(0)) revert ZeroAddress();
-        if (spender == address(0)) revert ZeroAddress();
+        if (owner == address(0)) {
+            revert ZeroAddress();
+        }
+        if (spender == address(0)) {
+            revert ZeroAddress();
+        }
 
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
@@ -225,9 +235,13 @@ contract ERC20PermitToken is IERC20, IERC20Permit {
     /// @param amount Cantidad a descontar de la allowance.
     function _spendAllowance(address owner, address spender, uint256 amount) internal {
         uint256 currentAllowance = _allowances[owner][spender];
-        if (currentAllowance == type(uint256).max) return;
+        if (currentAllowance == type(uint256).max) {
+            return;
+        }
 
-        if (currentAllowance < amount) revert InsufficientAllowance();
+        if (currentAllowance < amount) {
+            revert InsufficientAllowance();
+        }
 
         unchecked {
             _allowances[owner][spender] = currentAllowance - amount;
@@ -242,9 +256,7 @@ contract ERC20PermitToken is IERC20, IERC20Permit {
     /// @dev Construye domain separator con `_NAME_HASH` immutable y typehashes constantes.
     /// @param chainId Chain ID activo para el encoding EIP-712.
     function _buildDomainSeparator(uint256 chainId) internal view returns (bytes32) {
-        return keccak256(
-            abi.encode(_DOMAIN_TYPEHASH, _NAME_HASH, _VERSION_HASH, chainId, address(this))
-        );
+        return keccak256(abi.encode(_DOMAIN_TYPEHASH, _NAME_HASH, _VERSION_HASH, chainId, address(this)));
     }
 
     /// @dev Digest EIP-712 `\x19\x01`; `encodePacked` es más barato que `encode` para prefijo fijo.
