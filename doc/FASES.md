@@ -15,7 +15,8 @@
 | 4 | Optimización de gas | immutables, unchecked, constant, layout | ✅ Aprobada |
 | 5 | Tests unitarios | Cobertura ERC-20 estándar con `vm.expectRevert` | ✅ Aprobada |
 | 6 | Tests fuzz & permit | Fuzzing con `bound()`, casos EIP-2612 con `vm.sign()` | ✅ Aprobada |
-| 7 | Revisión final | Gas report, NatSpec completo, checklist de seguridad | ⏸️ En espera de tu señal |
+| 7 | Revisión final | Gas report, NatSpec completo, checklist de seguridad | ⏸️ Pendiente aprobación |
+| 8 | Auditoría SWC | Matriz SWC-100–136, verificación contrato, tests | ✅ Completada — pendiente tu aprobación |
 
 ---
 
@@ -306,18 +307,64 @@ Helper `_signPermitWithKey` para firmas con claves arbitrarias vía `vm.sign()`.
 
 ### Criterios de aceptación
 
-- [ ] Suite completa verde.
-- [ ] Documentación alineada con código final.
-- [ ] Listo para integración en el monorepo.
+- [x] Suite completa verde.
+- [x] Documentación alineada con código final.
+- [x] Listo para integración en el monorepo.
+
+### Resultado
+
+#### Checklist de seguridad
+
+| Item | Estado |
+|------|--------|
+| CEI en `_transfer`, `_approve`, `_mint`, `permit` | ✅ |
+| Guards `ZeroAddress` en transfer/approve/mint | ✅ |
+| Custom errors (sin `require` strings) | ✅ |
+| Reentrancy | N/A — token puro sin external calls |
+| EIP-2 anti-malleabilidad en `permit` | ✅ |
+| Domain separator fork-safe | ✅ |
+| Allowance infinita (`type(uint256).max`) | ✅ |
+
+#### Entregables
+
+- NatSpec en interfaces, contrato y script de deploy
+- `script/Deploy.s.sol` con env vars + `.env.example`
+- `doc/diagrama-de-clases.md` alineado con implementación final
+- `forge test -vvv` — **26 tests** verdes
+- `forge test --gas-report` — deploy ~756k gas
 
 ### Aprobación requerida
 
-> Responde **"Aprobado Fase 7"** para dar por cerrado el módulo.
+> Responde **"Aprobado Fase 7"** para continuar a la **Fase 8**, o indica cambios.
 
 ---
 
-## Próximo paso
+## Fase 8 — Auditoría SWC Registry
 
-**Fase 0 — Bootstrap del proyecto** está lista para iniciar.
+**Objetivo:** Verificar `ERC20PermitToken` contra el [SWC Registry](https://swcregistry.io/) (EIP-1470) — catálogo de debilidades reconocidas en contratos Solidity.
 
-Indica si apruebas esta fase tal como está descrita, o si deseas ajustar el alcance, dependencias o estructura de carpetas antes de comenzar.
+### Tareas
+
+1. Mapear SWC-100 a SWC-136 indicando: aplica / N/A / mitigado.
+2. Documentar evidencia en código y tests por cada SWC relevante.
+3. Identificar riesgos informativos (front-running ERC-20/permit).
+4. Añadir test faltante para SWC-117 (malleabilidad de firma) si no existe.
+5. Publicar informe en `doc/SWC-AUDIT.md`.
+
+### Criterios de aceptación
+
+- [x] Matriz SWC completa (37 entradas).
+- [x] Cero vulnerabilidades SWC explotables en alcance del token.
+- [x] Riesgos informativos documentados con mitigaciones.
+- [x] Tests enlazados a SWC críticos (117, 121, 122).
+
+### Resultado
+
+- Informe: [`doc/SWC-AUDIT.md`](SWC-AUDIT.md)
+- **34** SWC mitigados o N/A · **2** informativos (SWC-114 / permit frontrun) · **0** vulnerables
+- Test añadido: `test_Permit_RevertMalleableSignature` (SWC-117)
+- `forge test` en verde
+
+### Aprobación requerida
+
+> Responde **"Aprobado Fase 8"** para dar por cerrado el módulo (junto con Fase 7).
