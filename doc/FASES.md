@@ -10,8 +10,8 @@
 |------|--------|-------------|--------|
 | 0 | Bootstrap del proyecto | Foundry init, dependencias, estructura base | ✅ Aprobada |
 | 1 | Interfaces y errores | `IERC20`, `IERC20Permit`, custom errors, events | ✅ Aprobada |
-| 2 | ERC-20 core | Transfer, approve, transferFrom, balanceOf, totalSupply | ⏸️ En espera de tu señal |
-| 3 | EIP-2612 Permit | Domain separator, nonces, `permit()` con ecrecover | ⏸️ Bloqueada |
+| 2 | ERC-20 core | Transfer, approve, transferFrom, balanceOf, totalSupply | ✅ Completada — pendiente tu aprobación |
+| 3 | EIP-2612 Permit | Domain separator, nonces, `permit()` con ecrecover | ⏸️ En espera de tu señal |
 | 4 | Optimización de gas | immutables, unchecked, constant, layout | ⏸️ Bloqueada |
 | 5 | Tests unitarios | Cobertura ERC-20 estándar con `vm.expectRevert` | ⏸️ Bloqueada |
 | 6 | Tests fuzz & permit | Fuzzing con `bound()`, casos EIP-2612 con `vm.sign()` | ⏸️ Bloqueada |
@@ -116,13 +116,20 @@
 
 ### Criterios de aceptación
 
-- [ ] Cumple ERC-20 funcional básico.
-- [ ] CEI aplicado en todas las funciones con cambio de estado.
-- [ ] NatSpec completo en funciones public/external.
+- [x] Cumple ERC-20 funcional básico.
+- [x] CEI aplicado en todas las funciones con cambio de estado.
+- [x] NatSpec completo en funciones public/external.
+
+### Resultado
+
+- `ERC20PermitToken is IERC20` con state, constructor y funciones core.
+- Internas `_transfer`, `_approve`, `_mint`, `_spendAllowance` con guards y `unchecked` seguro.
+- Tests smoke: deploy, transfer, approve + transferFrom.
+- `forge build` y `forge test` en verde.
 
 ### Aprobación requerida
 
-> Responde **"Aprobado Fase 2"** para continuar.
+> Responde **"Aprobado Fase 2"** para continuar a la Fase 3.
 
 ---
 
