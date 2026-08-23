@@ -1,0 +1,34 @@
+# .cursorrules — Module 01: ERC-20 Token & EIP-2612 Permit
+
+## MODULE OVERVIEW
+Focus on building a production-ready, gas-optimized ERC-20 token standard with EIP-2612 off-chain permit approvals using Foundry and Solidity 0.8.24.
+
+---
+
+## 1. TECHNICAL CONSTRAINTS & STACK
+
+- **Compiler Version:** Strictly `pragma solidity 0.8.24;` (no floating pragmas).
+- **Tooling:** Foundry (`forge` for compilation, testing, and gas reporting).
+- **Core Standard Extensions:**
+  - Standard ERC-20 (Transfer, Approval, Allowance, BalanceOf).
+  - EIP-2612 `permit()` implementation using `ecrecover` for gasless approvals.
+  - EIP-712 dynamic Domain Separator handling for fork safety (`block.chainid`).
+
+---
+
+## 2. CODING & GAS OPTIMIZATION RULES
+
+- **Custom Errors:** Use custom errors (`error InsufficientBalance()`, `error InvalidSignature()`) instead of verbose `require()` strings.
+- **Unchecked Arithmetic:** Wrap balance adjustments and nonces in `unchecked { ... }` blocks where bounds are explicitly validated prior to execution.
+- **State Mutability & Immutables:**
+  - Mark `decimals`, `INITIAL_CHAIN_ID`, and `INITIAL_DOMAIN_SEPARATOR` as `immutable`.
+  - Use `constant` for `PERMIT_TYPEHASH`.
+- **Zero-Address Guards:** Explicitly revert on `address(0)` inputs across mint, transfer, approval, and permit calls.
+
+---
+
+## 3. TESTING REQUIREMENTS
+
+- **Foundry Unit Tests:** Test standard ERC-20 methods (transfer, transferFrom, approve).
+- **Fuzzing Tests:** Apply property-based fuzzing on transfer amounts and recipient addresses using `bound()`.
+- **EIP-2612 Validation:** Explicit test cases for valid signature approvals, expired deadlines, and invalid nonces using `vm.sign()`.

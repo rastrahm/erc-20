@@ -1,0 +1,33 @@
+# Foundry
+cache/
+out/
+broadcast/
+
+# Dependencias (instaladas vía forge install)
+lib/
+
+# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Cobertura y reportes
+lcov.info
+coverage/
+gas-report.txt
+
+# IDE y editores
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Logs y temporales
+*.log
+tmp/
+temp/
