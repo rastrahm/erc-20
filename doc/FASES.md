@@ -12,8 +12,8 @@
 | 1 | Interfaces y errores | `IERC20`, `IERC20Permit`, custom errors, events | ✅ Aprobada |
 | 2 | ERC-20 core | Transfer, approve, transferFrom, balanceOf, totalSupply | ✅ Aprobada |
 | 3 | EIP-2612 Permit | Domain separator, nonces, `permit()` con ecrecover | ✅ Aprobada |
-| 4 | Optimización de gas | immutables, unchecked, constant, layout | ⏸️ En espera de tu señal |
-| 5 | Tests unitarios | Cobertura ERC-20 estándar con `vm.expectRevert` | ⏸️ Bloqueada |
+| 4 | Optimización de gas | immutables, unchecked, constant, layout | ✅ Aprobada |
+| 5 | Tests unitarios | Cobertura ERC-20 estándar con `vm.expectRevert` | ⏸️ En espera de tu señal |
 | 6 | Tests fuzz & permit | Fuzzing con `bound()`, casos EIP-2612 con `vm.sign()` | ⏸️ Bloqueada |
 | 7 | Revisión final | Gas report, NatSpec completo, checklist de seguridad | ⏸️ Bloqueada |
 
@@ -186,12 +186,29 @@
 
 ### Criterios de aceptación
 
-- [ ] `forge test --gas-report` generado y revisado.
-- [ ] Sin regresiones funcionales respecto a fases 2–3.
+- [x] `forge test --gas-report` generado y revisado.
+- [x] Sin regresiones funcionales respecto a fases 2–3.
 
-### Aprobación requerida
+### Resultado
 
-> Responde **"Aprobado Fase 4"** para continuar.
+Optimizaciones aplicadas y documentadas con `@dev`:
+
+| Optimización | Tradeoff |
+|---|---|
+| `_DOMAIN_TYPEHASH`, `_VERSION_HASH` constantes | Menos keccak en forks; +2 slots de bytecode |
+| `_NAME_HASH` immutable | Evita releer `string storage` al recomputar domain separator |
+| `_buildDomainSeparator(chainId)` unificado | Constructor y forks comparten lógica |
+| Allowance `type(uint256).max` sin decremento | ~5k gas menos por `transferFrom`; patrón DeFi estándar |
+| `unchecked` en balances/nonces/allowance | Sin overflow checks redundantes tras validación explícita |
+| Immutables (`decimals`, chain ID, domain separator) | Ya presentes; lecturas ~100 gas vs ~2100 SLOAD |
+
+Gas report (`gas-report.txt`, gitignored): 9 tests verdes. Deploy ~756k gas.
+
+### Aprobación
+
+✅ **Aprobada** — 2026-08-23
+
+> Responde cuando quieras iniciar la **Fase 5**.
 
 ---
 
