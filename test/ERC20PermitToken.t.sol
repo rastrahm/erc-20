@@ -99,6 +99,18 @@ contract ERC20PermitTokenTest is Test {
         assertTrue(initialSeparator != forkedSeparator);
     }
 
+    function test_TransferFrom_InfiniteAllowance() public {
+        address recipient = makeAddr("recipient");
+
+        token.approve(spender, type(uint256).max);
+
+        vm.prank(spender);
+        token.transferFrom(address(this), recipient, 100 ether);
+
+        assertEq(token.balanceOf(recipient), 100 ether);
+        assertEq(token.allowance(address(this), spender), type(uint256).max);
+    }
+
     function _signPermit(
         address permitOwner,
         address permitSpender,
