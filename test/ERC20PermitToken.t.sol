@@ -5,7 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {ERC20PermitToken} from "../src/ERC20PermitToken.sol";
 
 /// @title ERC20PermitTokenTest
-/// @notice Test suite for ERC20PermitToken.
+/// @notice Suite de tests para ERC20PermitToken.
 contract ERC20PermitTokenTest is Test {
     ERC20PermitToken internal token;
 
@@ -14,12 +14,18 @@ contract ERC20PermitTokenTest is Test {
 
     address internal owner;
     address internal spender;
+    address internal alice;
+    address internal recipient;
 
     function setUp() public {
         token = new ERC20PermitToken("Test Token", "TST", 18, INITIAL_SUPPLY);
         owner = vm.addr(OWNER_PRIVATE_KEY);
         spender = makeAddr("spender");
+        alice = makeAddr("alice");
+        recipient = makeAddr("recipient");
     }
+
+    // ============ Deploy ============
 
     function test_Deploy() public view {
         assertEq(token.totalSupply(), INITIAL_SUPPLY);
@@ -27,19 +33,48 @@ contract ERC20PermitTokenTest is Test {
         assertEq(token.name(), "Test Token");
         assertEq(token.symbol(), "TST");
         assertEq(token.decimals(), 18);
+        assertEq(token.allowance(address(this), spender), 0);
     }
 
-    function test_Transfer() public {
-        address recipient = makeAddr("recipient");
+    // ============ ERC-20 positivos (Fase 5) ============
 
+    function test_Transfer_UpdatesBalances() public {
         assertTrue(token.transfer(recipient, 100 ether));
         assertEq(token.balanceOf(recipient), 100 ether);
         assertEq(token.balanceOf(address(this)), INITIAL_SUPPLY - 100 ether);
+        assertEq(token.totalSupply(), INITIAL_SUPPLY);
     }
 
-    function test_ApproveAndTransferFrom() public {
-        address recipient = makeAddr("recipient");
+    function test_Transfer_EmitsTransfer() public {
+        vm.expectEmit(true, true, false, true);
+        emit ERC20PermitToken.Transfer(address(this), recipient, 100 ether);
+        token.transfer(recipient, 100 ether);
+    }
 
+    function test_Transfer_ZeroAmount() public {
+        assertTrue(token.transfer(recipient, 0));
+        assertEq(token.balanceOf(recipient), 0);
+        assertEq(token.balanceOf(address(this)), INITIAL_SUPPLY);
+    }
+
+    function test_Approve_SetsAllowance() public {
+        assertTrue(token.approve(spender, 300 ether));
+        assertEq(token.allowance(address(this), spender), 300 ether);
+    }
+
+    function test_Approve_EmitsApproval() public {
+        vm.expectEmit(true, true, false, true);
+        emit ERC20PermitToken.Approval(address(this), spender, 300 ether);
+        token.approve(spender, 300 ether);
+    }
+
+    function test_Approve_OverwriteAllowance() public {
+        token.approve(spender, 100 ether);
+        token.approve(spender, 200 ether);
+        assertEq(token.allowance(address(this), spender), 200 ether);
+    }
+
+    function test_TransferFrom_SpendAllowance() public {
         token.approve(spender, 250 ether);
 
         vm.prank(spender);
@@ -48,6 +83,71 @@ contract ERC20PermitTokenTest is Test {
         assertEq(token.balanceOf(recipient), 250 ether);
         assertEq(token.allowance(address(this), spender), 0);
     }
+
+    function test_TransferFrom_EmitsTransfer() public {
+        token.approve(spender, 50 ether);
+
+        vm.prank(spender);
+        vm.expectEmit(true, true, false, true);
+        emit ERC20PermitToken.Transfer(address(this), recipient, 50 ether);
+        token.transferFrom(address(this), recipient, 50 ether);
+    }
+
+    function test_TransferFrom_InfiniteAllowance() public {
+        token.approve(spender, type(uint256).max);
+
+        vm.prank(spender);
+        token.transferFrom(address(this), recipient, 100 ether);
+
+        assertEq(token.balanceOf(recipient), 100 ether);
+        assertEq(token.allowance(address(this), spender), type(uint256).max);
+    }
+
+    // ============ ERC-20 reverts (Fase 5) ============
+
+    function test_Transfer_RevertInsufficientBalance() public {
+        vm.expectRevert(ERC20PermitToken.InsufficientBalance.selector);
+        token.transfer(recipient, INITIAL_SUPPLY + 1);
+    }
+
+    function test_Transfer_RevertZeroAddressRecipient() public {
+        vm.expectRevert(ERC20PermitToken.ZeroAddress.selector);
+        token.transfer(address(0), 1 ether);
+    }
+
+    function test_Approve_RevertZeroAddressSpender() public {
+        vm.expectRevert(ERC20PermitToken.ZeroAddress.selector);
+        token.approve(address(0), 1 ether);
+    }
+
+    function test_TransferFrom_RevertInsufficientAllowance() public {
+        token.approve(spender, 50 ether);
+
+        vm.prank(spender);
+        vm.expectRevert(ERC20PermitToken.InsufficientAllowance.selector);
+        token.transferFrom(address(this), recipient, 100 ether);
+    }
+
+    function test_TransferFrom_RevertInsufficientBalance() public {
+        token.transfer(alice, 100 ether);
+
+        vm.prank(alice);
+        token.approve(spender, 200 ether);
+
+        vm.prank(spender);
+        vm.expectRevert(ERC20PermitToken.InsufficientBalance.selector);
+        token.transferFrom(alice, recipient, 200 ether);
+    }
+
+    function test_TransferFrom_RevertZeroAddressRecipient() public {
+        token.approve(spender, 100 ether);
+
+        vm.prank(spender);
+        vm.expectRevert(ERC20PermitToken.ZeroAddress.selector);
+        token.transferFrom(address(this), address(0), 1 ether);
+    }
+
+    // ============ EIP-2612 (Fase 3 — cubierto antes de Fase 6 fuzz) ============
 
     function test_Permit_ValidSignature() public {
         uint256 value = 500 ether;
@@ -99,17 +199,7 @@ contract ERC20PermitTokenTest is Test {
         assertTrue(initialSeparator != forkedSeparator);
     }
 
-    function test_TransferFrom_InfiniteAllowance() public {
-        address recipient = makeAddr("recipient");
-
-        token.approve(spender, type(uint256).max);
-
-        vm.prank(spender);
-        token.transferFrom(address(this), recipient, 100 ether);
-
-        assertEq(token.balanceOf(recipient), 100 ether);
-        assertEq(token.allowance(address(this), spender), type(uint256).max);
-    }
+    // ============ Helpers ============
 
     function _signPermit(
         address permitOwner,
