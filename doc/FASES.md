@@ -8,8 +8,8 @@
 
 | Fase | Nombre | Entregables | Estado |
 |------|--------|-------------|--------|
-| 0 | Bootstrap del proyecto | Foundry init, dependencias, estructura base | ✅ Completada — pendiente tu aprobación |
-| 1 | Interfaces y errores | `IERC20`, `IERC20Permit`, custom errors, events | ⏳ Siguiente fase |
+| 0 | Bootstrap del proyecto | Foundry init, dependencias, estructura base | ✅ Aprobada |
+| 1 | Interfaces y errores | `IERC20`, `IERC20Permit`, custom errors, events | ⏸️ En espera de tu señal |
 | 2 | ERC-20 core | Transfer, approve, transferFrom, balanceOf, totalSupply | ⏸️ Bloqueada |
 | 3 | EIP-2612 Permit | Domain separator, nonces, `permit()` con ecrecover | ⏸️ Bloqueada |
 | 4 | Optimización de gas | immutables, unchecked, constant, layout | ⏸️ Bloqueada |
@@ -56,9 +56,11 @@
 - Estructura base creada con contrato, test y script placeholder.
 - `forge build` y `forge test` ejecutados con éxito.
 
-### Aprobación requerida
+### Aprobación
 
-> Responde **"Aprobado Fase 0"** (o indica cambios) para continuar a la Fase 1.
+✅ **Aprobada** — 2026-08-23
+
+> Responde cuando quieras iniciar la **Fase 1**.
 
 ---
 
