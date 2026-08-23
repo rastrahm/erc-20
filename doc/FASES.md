@@ -10,9 +10,9 @@
 |------|--------|-------------|--------|
 | 0 | Bootstrap del proyecto | Foundry init, dependencias, estructura base | ✅ Aprobada |
 | 1 | Interfaces y errores | `IERC20`, `IERC20Permit`, custom errors, events | ✅ Aprobada |
-| 2 | ERC-20 core | Transfer, approve, transferFrom, balanceOf, totalSupply | ✅ Completada — pendiente tu aprobación |
-| 3 | EIP-2612 Permit | Domain separator, nonces, `permit()` con ecrecover | ⏸️ En espera de tu señal |
-| 4 | Optimización de gas | immutables, unchecked, constant, layout | ⏸️ Bloqueada |
+| 2 | ERC-20 core | Transfer, approve, transferFrom, balanceOf, totalSupply | ✅ Aprobada |
+| 3 | EIP-2612 Permit | Domain separator, nonces, `permit()` con ecrecover | ✅ Aprobada |
+| 4 | Optimización de gas | immutables, unchecked, constant, layout | ⏸️ En espera de tu señal |
 | 5 | Tests unitarios | Cobertura ERC-20 estándar con `vm.expectRevert` | ⏸️ Bloqueada |
 | 6 | Tests fuzz & permit | Fuzzing con `bound()`, casos EIP-2612 con `vm.sign()` | ⏸️ Bloqueada |
 | 7 | Revisión final | Gas report, NatSpec completo, checklist de seguridad | ⏸️ Bloqueada |
@@ -127,9 +127,11 @@
 - Tests smoke: deploy, transfer, approve + transferFrom.
 - `forge build` y `forge test` en verde.
 
-### Aprobación requerida
+### Aprobación
 
-> Responde **"Aprobado Fase 2"** para continuar a la Fase 3.
+✅ **Aprobada** — 2026-08-23
+
+> Responde cuando quieras iniciar la **Fase 3**.
 
 ---
 
@@ -151,13 +153,22 @@
 
 ### Criterios de aceptación
 
-- [ ] Firma válida establece allowance correctamente.
-- [ ] Domain separator cambia si `block.chainid != INITIAL_CHAIN_ID`.
-- [ ] Nonce se incrementa exactamente una vez por permit exitoso.
+- [x] Firma válida establece allowance correctamente.
+- [x] Domain separator cambia si `block.chainid != INITIAL_CHAIN_ID`.
+- [x] Nonce se incrementa exactamente una vez por permit exitoso.
 
-### Aprobación requerida
+### Resultado
 
-> Responde **"Aprobado Fase 3"** para continuar.
+- `ERC20PermitToken is IERC20, IERC20Permit` con `_nonces`, `PERMIT_TYPEHASH`, immutables fork-safe.
+- `permit()` valida deadline, anti-malleabilidad (EIP-2), `ecrecover`, incrementa nonce y llama `_approve`.
+- Tests: firma válida, deadline expirado, nonce inválido, domain separator en fork.
+- `forge test` — 8 tests en verde.
+
+### Aprobación
+
+✅ **Aprobada** — 2026-08-23
+
+> Responde cuando quieras iniciar la **Fase 4**.
 
 ---
 

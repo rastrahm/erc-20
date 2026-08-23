@@ -2,11 +2,12 @@
 pragma solidity 0.8.24;
 
 import {IERC20} from "./interfaces/IERC20.sol";
+import {IERC20Permit} from "./interfaces/IERC20Permit.sol";
 
 /// @title ERC20PermitToken
 /// @notice Token ERC-20 con soporte EIP-2612 permit para aprobaciones gasless.
-/// @dev Fase 2: implementación ERC-20 core. EIP-2612 en Fase 3.
-contract ERC20PermitToken is IERC20 {
+/// @dev Fase 3: EIP-2612 permit con domain separator dinámico (fork-safe).
+contract ERC20PermitToken is IERC20, IERC20Permit {
     // ============ Errors ============
 
     /// @dev El balance del titular es insuficiente para la operación solicitada.
@@ -32,10 +33,21 @@ contract ERC20PermitToken is IERC20 {
     /// @dev Emitido cuando se establece la allowance de `spender` sobre los tokens de `owner`.
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
+    // ============ Constants ============
+
+    /// @dev Typehash EIP-712 del struct Permit según EIP-2612.
+    bytes32 public constant PERMIT_TYPEHASH =
+        keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
+
+    /// @dev Mitad del orden de la curva secp256k1 para rechazar firmas malleables (EIP-2).
+    uint256 private constant _SECP256K1_HALF_ORDER =
+        0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0;
+
     // ============ State Variables ============
 
     mapping(address account => uint256 balance) private _balances;
     mapping(address owner => mapping(address spender => uint256 allowance)) private _allowances;
+    mapping(address owner => uint256 nonce) private _nonces;
 
     uint256 private _totalSupply;
 
@@ -48,6 +60,12 @@ contract ERC20PermitToken is IERC20 {
     /// @notice Decimales de precisión del token.
     uint8 public immutable decimals;
 
+    /// @notice Chain ID capturado en el deploy para optimizar `DOMAIN_SEPARATOR`.
+    uint256 public immutable INITIAL_CHAIN_ID;
+
+    /// @notice Domain separator EIP-712 precalculado en el deploy.
+    bytes32 public immutable INITIAL_DOMAIN_SEPARATOR;
+
     // ============ Constructor ============
 
     /// @notice Despliega el token y acuña el supply inicial al deployer.
@@ -59,6 +77,8 @@ contract ERC20PermitToken is IERC20 {
         name = name_;
         symbol = symbol_;
         decimals = decimals_;
+        INITIAL_CHAIN_ID = block.chainid;
+        INITIAL_DOMAIN_SEPARATOR = _computeDomainSeparator();
         _mint(msg.sender, initialSupply_);
     }
 
@@ -77,6 +97,16 @@ contract ERC20PermitToken is IERC20 {
     /// @inheritdoc IERC20
     function allowance(address owner, address spender) external view returns (uint256) {
         return _allowances[owner][spender];
+    }
+
+    /// @inheritdoc IERC20Permit
+    function nonces(address owner) external view returns (uint256) {
+        return _nonces[owner];
+    }
+
+    /// @inheritdoc IERC20Permit
+    function DOMAIN_SEPARATOR() external view returns (bytes32) {
+        return _domainSeparator();
     }
 
     // ============ External Functions ============
@@ -98,6 +128,34 @@ contract ERC20PermitToken is IERC20 {
         _spendAllowance(from, msg.sender, amount);
         _transfer(from, to, amount);
         return true;
+    }
+
+    /// @inheritdoc IERC20Permit
+    function permit(
+        address owner,
+        address spender,
+        uint256 value,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        if (block.timestamp > deadline) revert PermitExpired();
+        if (uint256(s) > _SECP256K1_HALF_ORDER) revert InvalidSignature();
+
+        uint256 nonce = _nonces[owner];
+
+        bytes32 structHash = keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline));
+        bytes32 digest = _hashTypedDataV4(structHash);
+
+        address recovered = ecrecover(digest, v, r, s);
+        if (recovered != owner || recovered == address(0)) revert InvalidSignature();
+
+        unchecked {
+            _nonces[owner] = nonce + 1;
+        }
+
+        _approve(owner, spender, value);
     }
 
     // ============ Internal Functions ============
@@ -158,5 +216,29 @@ contract ERC20PermitToken is IERC20 {
         unchecked {
             _allowances[owner][spender] = currentAllowance - amount;
         }
+    }
+
+    /// @dev Devuelve el domain separator activo (immutable en chain original, recalculado en forks).
+    function _domainSeparator() internal view returns (bytes32) {
+        return block.chainid == INITIAL_CHAIN_ID ? INITIAL_DOMAIN_SEPARATOR : _computeDomainSeparator();
+    }
+
+    /// @dev Calcula el domain separator EIP-712 con el `chainId` y contrato actuales.
+    function _computeDomainSeparator() internal view returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(bytes(name)),
+                keccak256(bytes("1")),
+                block.chainid,
+                address(this)
+            )
+        );
+    }
+
+    /// @dev Construye el digest EIP-712 `\x19\x01` para un struct hash dado.
+    /// @param structHash Hash del struct Permit codificado.
+    function _hashTypedDataV4(bytes32 structHash) internal view returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19\x01", _domainSeparator(), structHash));
     }
 }
