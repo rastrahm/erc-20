@@ -15,8 +15,10 @@
 | 4 | Optimización de gas | immutables, unchecked, constant, layout | ✅ Aprobada |
 | 5 | Tests unitarios | Cobertura ERC-20 estándar con `vm.expectRevert` | ✅ Aprobada |
 | 6 | Tests fuzz & permit | Fuzzing con `bound()`, casos EIP-2612 con `vm.sign()` | ✅ Aprobada |
-| 7 | Revisión final | Gas report, NatSpec completo, checklist de seguridad | ⏸️ Pendiente aprobación |
-| 8 | Auditoría SWC | Matriz SWC-100–136, verificación contrato, tests | ✅ Completada — pendiente tu aprobación |
+| 7 | Revisión final | Gas report, NatSpec completo, checklist de seguridad | ✅ Aprobada |
+| 8 | Auditoría SWC | Matriz SWC-100–136, verificación contrato, tests | ✅ Aprobada |
+
+> **Módulo 01 cerrado** — Todas las fases (0–8) aprobadas el 2026-08-23.
 
 ---
 
@@ -330,12 +332,12 @@ Helper `_signPermitWithKey` para firmas con claves arbitrarias vía `vm.sign()`.
 - NatSpec en interfaces, contrato y script de deploy
 - `script/Deploy.s.sol` con env vars + `.env.example`
 - `doc/diagrama-de-clases.md` alineado con implementación final
-- `forge test -vvv` — **26 tests** verdes
+- `forge test -vvv` — **27 tests** verdes
 - `forge test --gas-report` — deploy ~756k gas
 
-### Aprobación requerida
+### Aprobación
 
-> Responde **"Aprobado Fase 7"** para continuar a la **Fase 8**, o indica cambios.
+✅ **Aprobada** — 2026-08-23
 
 ---
 
@@ -365,6 +367,14 @@ Helper `_signPermitWithKey` para firmas con claves arbitrarias vía `vm.sign()`.
 - Test añadido: `test_Permit_RevertMalleableSignature` (SWC-117)
 - `forge test` en verde
 
-### Aprobación requerida
+### Aprobación
 
-> Responde **"Aprobado Fase 8"** para dar por cerrado el módulo (junto con Fase 7).
+✅ **Aprobada** — 2026-08-23
+
+---
+
+## Cierre del módulo
+
+**Estado:** ✅ **Cerrado** — 2026-08-23
+
+El módulo **01-erc20** (ERC-20 + EIP-2612 Permit) completó las fases 0–8. Listo para integración en el monorepo o despliegue vía `script/Deploy.s.sol`.
