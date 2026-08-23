@@ -8,8 +8,8 @@
 
 | Fase | Nombre | Entregables | Estado |
 |------|--------|-------------|--------|
-| 0 | Bootstrap del proyecto | Foundry init, dependencias, estructura base | ⏳ Pendiente de aprobación |
-| 1 | Interfaces y errores | `IERC20`, `IERC20Permit`, custom errors, events | ⏸️ Bloqueada |
+| 0 | Bootstrap del proyecto | Foundry init, dependencias, estructura base | ✅ Completada — pendiente tu aprobación |
+| 1 | Interfaces y errores | `IERC20`, `IERC20Permit`, custom errors, events | ⏳ Siguiente fase |
 | 2 | ERC-20 core | Transfer, approve, transferFrom, balanceOf, totalSupply | ⏸️ Bloqueada |
 | 3 | EIP-2612 Permit | Domain separator, nonces, `permit()` con ecrecover | ⏸️ Bloqueada |
 | 4 | Optimización de gas | immutables, unchecked, constant, layout | ⏸️ Bloqueada |
@@ -45,13 +45,20 @@
 
 ### Criterios de aceptación
 
-- [ ] Proyecto compila sin errores.
-- [ ] `foundry.toml` alineado con reglas del monorepo.
-- [ ] `.gitignore` operativo (cache/, out/, lib/, .env).
+- [x] Proyecto compila sin errores.
+- [x] `foundry.toml` alineado con reglas del monorepo.
+- [x] `.gitignore` operativo (cache/, out/, lib/, .env).
+
+### Resultado
+
+- Foundry 1.4.3 inicializado con `forge init --no-git --force`.
+- Dependencias: `forge-std`, `openzeppelin-contracts@v5.0.2`, `solmate`.
+- Estructura base creada con contrato, test y script placeholder.
+- `forge build` y `forge test` ejecutados con éxito.
 
 ### Aprobación requerida
 
-> Responde **"Aprobado Fase 0"** (o indica cambios) para continuar.
+> Responde **"Aprobado Fase 0"** (o indica cambios) para continuar a la Fase 1.
 
 ---
 
