@@ -9,8 +9,8 @@
 | Fase | Nombre | Entregables | Estado |
 |------|--------|-------------|--------|
 | 0 | Bootstrap del proyecto | Foundry init, dependencias, estructura base | ✅ Aprobada |
-| 1 | Interfaces y errores | `IERC20`, `IERC20Permit`, custom errors, events | ⏸️ En espera de tu señal |
-| 2 | ERC-20 core | Transfer, approve, transferFrom, balanceOf, totalSupply | ⏸️ Bloqueada |
+| 1 | Interfaces y errores | `IERC20`, `IERC20Permit`, custom errors, events | ✅ Aprobada |
+| 2 | ERC-20 core | Transfer, approve, transferFrom, balanceOf, totalSupply | ⏸️ En espera de tu señal |
 | 3 | EIP-2612 Permit | Domain separator, nonces, `permit()` con ecrecover | ⏸️ Bloqueada |
 | 4 | Optimización de gas | immutables, unchecked, constant, layout | ⏸️ Bloqueada |
 | 5 | Tests unitarios | Cobertura ERC-20 estándar con `vm.expectRevert` | ⏸️ Bloqueada |
@@ -83,13 +83,22 @@
 
 ### Criterios de aceptación
 
-- [ ] Interfaces compilan de forma independiente.
-- [ ] Sin `require` con strings — solo custom errors documentados.
-- [ ] Layout: Interfaces → Errors → Events.
+- [x] Interfaces compilan de forma independiente.
+- [x] Sin `require` con strings — solo custom errors documentados.
+- [x] Layout: Interfaces → Errors → Events.
 
-### Aprobación requerida
+### Resultado
 
-> Responde **"Aprobado Fase 1"** para continuar.
+- `src/interfaces/IERC20.sol` — 7 funciones ERC-20 con NatSpec.
+- `src/interfaces/IERC20Permit.sol` — `permit`, `nonces`, `DOMAIN_SEPARATOR` con NatSpec.
+- `src/ERC20PermitToken.sol` — 5 custom errors + events `Transfer` y `Approval`.
+- Herencia de interfaces diferida a Fase 2 (implementación core).
+
+### Aprobación
+
+✅ **Aprobada** — 2026-08-23
+
+> Responde cuando quieras iniciar la **Fase 2**.
 
 ---
 
