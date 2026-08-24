@@ -147,6 +147,33 @@ contract ERC20PermitTokenTest is Test {
         token.transferFrom(address(this), address(0), 1 ether);
     }
 
+    // ============ Campaña A — Integridad ERC-20 (ataques defensivos) ============
+    // A1–A6: cubiertos arriba (InsufficientBalance / ZeroAddress / InsufficientAllowance).
+
+    /// @dev A7: tras gastar allowance parcial, gastar resto+1 debe revertir.
+    function test_AttackA7_PartialAllowanceThenOverspend() public {
+        token.approve(spender, 100 ether);
+
+        vm.prank(spender);
+        assertTrue(token.transferFrom(address(this), recipient, 40 ether));
+        assertEq(token.allowance(address(this), spender), 60 ether);
+
+        vm.prank(spender);
+        vm.expectRevert(ERC20PermitToken.InsufficientAllowance.selector);
+        token.transferFrom(address(this), recipient, 61 ether);
+    }
+
+    /// @dev A8: transfer a sí mismo no infla totalSupply ni crea tokens.
+    function test_AttackA8_SelfTransferDoesNotInflateSupply() public {
+        uint256 beforeBalance = token.balanceOf(address(this));
+        uint256 amount = 50 ether;
+
+        assertTrue(token.transfer(address(this), amount));
+
+        assertEq(token.balanceOf(address(this)), beforeBalance);
+        assertEq(token.totalSupply(), INITIAL_SUPPLY);
+    }
+
     // ============ EIP-2612 (Fase 3 — cubierto antes de Fase 6 fuzz) ============
 
     function test_Permit_ValidSignature() public {
@@ -284,6 +311,108 @@ contract ERC20PermitTokenTest is Test {
 
         assertEq(token.allowance(owner, spender), value);
         assertEq(token.nonces(owner), nonce + 1);
+    }
+
+    // ============ Campaña B — Firmas EIP-2612 (ataques defensivos) ============
+    // B1–B6: cubiertos arriba (válida, expired, nonce, wrong signer, malleable, spender 0).
+
+    /// @dev B7: reutilizar la misma firma tras un permit exitoso (replay) debe fallar.
+    function test_AttackB7_ReplaySameSignatureAfterSuccess() public {
+        uint256 value = 100 ether;
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 nonce = token.nonces(owner);
+
+        (uint8 v, bytes32 r, bytes32 s) = _signPermit(owner, spender, value, nonce, deadline);
+
+        token.permit(owner, spender, value, deadline, v, r, s);
+        assertEq(token.nonces(owner), nonce + 1);
+
+        vm.expectRevert(ERC20PermitToken.InvalidSignature.selector);
+        token.permit(owner, spender, value, deadline, v, r, s);
+    }
+
+    /// @dev B8: firma válida en chainId original es inválida tras fork (domain separator distinto).
+    function test_AttackB8_PermitInvalidAfterChainIdChange() public {
+        uint256 value = 100 ether;
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 nonce = token.nonces(owner);
+
+        (uint8 v, bytes32 r, bytes32 s) = _signPermit(owner, spender, value, nonce, deadline);
+
+        vm.chainId(token.INITIAL_CHAIN_ID() + 1);
+
+        vm.expectRevert(ERC20PermitToken.InvalidSignature.selector);
+        token.permit(owner, spender, value, deadline, v, r, s);
+
+        assertEq(token.nonces(owner), nonce);
+        assertEq(token.allowance(owner, spender), 0);
+    }
+
+    /// @dev B9: v inválido hace que ecrecover retorne address(0) → InvalidSignature.
+    function test_AttackB9_InvalidVYieldsZeroRecovered() public {
+        uint256 value = 100 ether;
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 nonce = token.nonces(owner);
+
+        (, bytes32 r, bytes32 s) = _signPermit(owner, spender, value, nonce, deadline);
+        uint8 invalidV = 0;
+
+        vm.expectRevert(ERC20PermitToken.InvalidSignature.selector);
+        token.permit(owner, spender, value, deadline, invalidV, r, s);
+
+        assertEq(token.nonces(owner), nonce);
+        assertEq(token.allowance(owner, spender), 0);
+    }
+
+    // ============ Campaña C — Orden de transacciones (SWC-114, documental) ============
+    // No son fallos del contrato: el estándar ERC-20 / EIP-2612 admite este comportamiento.
+
+    /// @dev C1: cambiar allowance de N a M sin pasar por 0 es válido on-chain (riesgo de diseño ERC-20).
+    function test_AttackC1_ApproveOverwriteWithoutZeroing() public {
+        token.approve(spender, 100 ether);
+        assertEq(token.allowance(address(this), spender), 100 ether);
+
+        token.approve(spender, 20 ether);
+        assertEq(token.allowance(address(this), spender), 20 ether);
+
+        vm.prank(spender);
+        assertTrue(token.transferFrom(address(this), recipient, 20 ether));
+        assertEq(token.allowance(address(this), spender), 0);
+    }
+
+    /// @dev C2: un relayer distinto al owner puede enviar un permit ya firmado (by design EIP-2612).
+    function test_AttackC2_RelayerCanSubmitSignedPermit() public {
+        address relayer = makeAddr("relayer");
+        uint256 value = 100 ether;
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 nonce = token.nonces(owner);
+
+        (uint8 v, bytes32 r, bytes32 s) = _signPermit(owner, spender, value, nonce, deadline);
+
+        vm.prank(relayer);
+        token.permit(owner, spender, value, deadline, v, r, s);
+
+        assertEq(token.allowance(owner, spender), value);
+        assertEq(token.nonces(owner), nonce + 1);
+        assertTrue(relayer != owner);
+    }
+
+    // ============ Campaña D — Aritmética unchecked (ataques defensivos) ============
+    // D2: cubierto por test_TransferFrom_InfiniteAllowance.
+    // D3: cubierto por test_AttackB7_ReplaySameSignatureAfterSuccess.
+
+    /// @dev D1: transferir el balance exacto deja al sender en 0 y no altera totalSupply.
+    function test_AttackD1_ExactBalanceDrainKeepsSupply() public {
+        uint256 amount = 100 ether;
+        assertTrue(token.transfer(alice, amount));
+        assertEq(token.balanceOf(alice), amount);
+
+        vm.prank(alice);
+        assertTrue(token.transfer(recipient, amount));
+
+        assertEq(token.balanceOf(alice), 0);
+        assertEq(token.balanceOf(recipient), amount);
+        assertEq(token.totalSupply(), INITIAL_SUPPLY);
     }
 
     // ============ Helpers ============

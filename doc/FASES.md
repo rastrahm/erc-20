@@ -378,3 +378,5 @@ Helper `_signPermitWithKey` para firmas con claves arbitrarias vía `vm.sign()`.
 **Estado:** ✅ **Cerrado** — 2026-08-23
 
 El módulo **01-erc20** (ERC-20 + EIP-2612 Permit) completó las fases 0–8. Listo para integración en el monorepo o despliegue vía `script/Deploy.s.sol`.
+
+Campañas de ataque (post-cierre): [`doc/ATAQUES.md`](ATAQUES.md).
