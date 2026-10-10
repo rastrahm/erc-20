@@ -1,5 +1,7 @@
 # Plan de Fases — Módulo 01: ERC-20 + EIP-2612 Permit
 
+> English version: [`FASES-EN.md`](FASES-EN.md)
+
 > **Protocolo de aprobación:** Cada fase debe ser revisada y aprobada explícitamente antes de iniciar la siguiente. No se avanza sin confirmación del responsable del proyecto.
 
 ---
@@ -331,7 +333,7 @@ Helper `_signPermitWithKey` para firmas con claves arbitrarias vía `vm.sign()`.
 
 - NatSpec en interfaces, contrato y script de deploy
 - `script/Deploy.s.sol` con env vars + `.env.example`
-- `doc/diagrama-de-clases.md` alineado con implementación final
+- `doc/diagrama-de-clases-ES.md` alineado con implementación final
 - `forge test -vvv` — **27 tests** verdes
 - `forge test --gas-report` — deploy ~756k gas
 
@@ -351,7 +353,7 @@ Helper `_signPermitWithKey` para firmas con claves arbitrarias vía `vm.sign()`.
 2. Documentar evidencia en código y tests por cada SWC relevante.
 3. Identificar riesgos informativos (front-running ERC-20/permit).
 4. Añadir test faltante para SWC-117 (malleabilidad de firma) si no existe.
-5. Publicar informe en `doc/SWC-AUDIT.md`.
+5. Publicar informe en `doc/SWC-AUDIT-ES.md`.
 
 ### Criterios de aceptación
 
@@ -362,7 +364,7 @@ Helper `_signPermitWithKey` para firmas con claves arbitrarias vía `vm.sign()`.
 
 ### Resultado
 
-- Informe: [`doc/SWC-AUDIT.md`](SWC-AUDIT.md)
+- Informe: [`doc/SWC-AUDIT-ES.md`](SWC-AUDIT-ES.md)
 - **34** SWC mitigados o N/A · **2** informativos (SWC-114 / permit frontrun) · **0** vulnerables
 - Test añadido: `test_Permit_RevertMalleableSignature` (SWC-117)
 - `forge test` en verde
@@ -379,4 +381,4 @@ Helper `_signPermitWithKey` para firmas con claves arbitrarias vía `vm.sign()`.
 
 El módulo **01-erc20** (ERC-20 + EIP-2612 Permit) completó las fases 0–8. Listo para integración en el monorepo o despliegue vía `script/Deploy.s.sol`.
 
-Campañas de ataque (post-cierre): [`doc/ATAQUES.md`](ATAQUES.md).
+Campañas de ataque (post-cierre): [`doc/ATAQUES-ES.md`](ATAQUES-ES.md).

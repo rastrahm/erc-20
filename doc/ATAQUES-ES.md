@@ -1,11 +1,13 @@
 # Campañas de ataque — ERC20PermitToken
 
+> English version: [`ATAQUES-EN.md`](ATAQUES-EN.md)
+
 > **Protocolo:** Cada campaña se aprueba antes de implementar.  
 > **Formato de implementación:** tests Foundry defensivos (`vm.expectRevert` / invariantes). El éxito del “ataque” es que **falle** contra el contrato.  
 > **Fuera de alcance:** scripts de exploit, payloads, o procedimientos para extraer fondos.
 
 Contrato: `src/ERC20PermitToken.sol`  
-Auditoría previa: [`SWC-AUDIT.md`](SWC-AUDIT.md)
+Auditoría previa: [`SWC-AUDIT-ES.md`](SWC-AUDIT-ES.md)
 
 ---
 
@@ -164,4 +166,4 @@ Ejecutar todos los tests de ataque:
 forge test --match-test test_Attack
 ```
 
-Referencia SWC: [`SWC-AUDIT.md`](SWC-AUDIT.md).
+Referencia SWC: [`SWC-AUDIT-ES.md`](SWC-AUDIT-ES.md).

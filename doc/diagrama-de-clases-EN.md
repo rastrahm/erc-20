@@ -1,6 +1,8 @@
-# Diagrama de Clases — ERC-20 Token con EIP-2612 Permit
+# Class Diagram — ERC-20 Token with EIP-2612 Permit
 
-Modelo de contratos, interfaces, estado y relaciones del módulo 01 (implementación final).
+> Versión en español: [`diagrama-de-clases-ES.md`](diagrama-de-clases-ES.md)
+
+Model of contracts, interfaces, state and relationships of module 01 (final implementation).
 
 ```mermaid
 classDiagram
@@ -76,42 +78,42 @@ classDiagram
     ERC20PermitToken ..> Events : emits
 ```
 
-## Descripción de componentes
+## Component Description
 
 ### Interfaces
 
-| Interface | Responsabilidad |
-|-----------|-----------------|
-| `IERC20` | Contrato estándar ERC-20: balances, transferencias y aprobaciones |
-| `IERC20Permit` | Extensión EIP-2612: `permit()`, nonces y domain separator |
+| Interface | Responsibility |
+|-----------|----------------|
+| `IERC20` | Standard ERC-20 contract: balances, transfers and approvals |
+| `IERC20Permit` | EIP-2612 extension: `permit()`, nonces and domain separator |
 
-### Estado principal
+### Main State
 
-| Variable | Tipo | Visibilidad | Notas |
-|----------|------|-------------|-------|
-| `_balances` | `mapping(address => uint256)` | private | Saldos por cuenta |
-| `_allowances` | `mapping(address => mapping(address => uint256))` | private | Aprobaciones delegadas |
-| `_nonces` | `mapping(address => uint256)` | private | Nonces EIP-2612 por owner |
-| `_totalSupply` | `uint256` | private | Supply total en circulación |
-| `_NAME_HASH` | `bytes32` | private immutable | Hash del nombre para EIP-712 |
-| `decimals` | `uint8` | immutable | Decimales del token |
-| `INITIAL_CHAIN_ID` | `uint256` | immutable | Chain ID al deploy (fork safety) |
-| `INITIAL_DOMAIN_SEPARATOR` | `bytes32` | immutable | Separator precalculado al deploy |
-| `PERMIT_TYPEHASH` | `bytes32` | public constant | Hash del struct Permit |
+| Variable | Type | Visibility | Notes |
+|----------|------|------------|-------|
+| `_balances` | `mapping(address => uint256)` | private | Balance per account |
+| `_allowances` | `mapping(address => mapping(address => uint256))` | private | Delegated approvals |
+| `_nonces` | `mapping(address => uint256)` | private | EIP-2612 nonces per owner |
+| `_totalSupply` | `uint256` | private | Total supply in circulation |
+| `_NAME_HASH` | `bytes32` | private immutable | Name hash for EIP-712 |
+| `decimals` | `uint8` | immutable | Token decimals |
+| `INITIAL_CHAIN_ID` | `uint256` | immutable | Chain ID at deploy time (fork safety) |
+| `INITIAL_DOMAIN_SEPARATOR` | `bytes32` | immutable | Separator precomputed at deploy time |
+| `PERMIT_TYPEHASH` | `bytes32` | public constant | Hash of the Permit struct |
 
-### Funciones internas clave
+### Key Internal Functions
 
-| Función | Rol |
-|---------|-----|
-| `_transfer` | Lógica central de transferencia con guards CEI |
-| `_approve` | Establece allowance con guard de zero-address |
-| `_mint` | Mint inicial en constructor (supply al deployer) |
-| `_spendAllowance` | Consume allowance; soporta `type(uint256).max` |
-| `_domainSeparator` | Retorna separator immutable o recalculado en fork |
-| `_buildDomainSeparator` | Construye domain separator EIP-712 |
-| `_hashTypedDataV4` | Construye digest EIP-712 para `ecrecover` |
+| Function | Role |
+|----------|------|
+| `_transfer` | Core transfer logic with CEI guards |
+| `_approve` | Sets allowance with zero-address guard |
+| `_mint` | Initial mint in the constructor (supply to the deployer) |
+| `_spendAllowance` | Consumes allowance; supports `type(uint256).max` |
+| `_domainSeparator` | Returns the immutable separator or recomputes it on a fork |
+| `_buildDomainSeparator` | Builds the EIP-712 domain separator |
+| `_hashTypedDataV4` | Builds the EIP-712 digest for `ecrecover` |
 
-### Relación con tests (Foundry)
+### Relationship with Tests (Foundry)
 
 ```mermaid
 classDiagram

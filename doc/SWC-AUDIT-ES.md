@@ -1,5 +1,7 @@
 # Auditoría SWC — ERC20PermitToken
 
+> English version: [`SWC-AUDIT-EN.md`](SWC-AUDIT-EN.md)
+
 Verificación del contrato `ERC20PermitToken` contra el [SWC Registry](https://swcregistry.io/) (EIP-1470).
 
 > **Nota:** El SWC Registry no se mantiene activamente desde ~2020. Para guías actualizadas ver también [SCSVS](https://github.com/ComposableSecurity/SCSVS) y [EEA EthTrust](https://entethalliance.org/specs/ethtrust/).
