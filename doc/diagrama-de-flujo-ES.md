@@ -1,5 +1,7 @@
 # Diagrama de Flujo — Operaciones críticas
 
+> English version: [`diagrama-de-flujo-EN.md`](diagrama-de-flujo-EN.md)
+
 Detalle del flujo de datos y control para `transfer`, `transferFrom` y `permit`.
 
 ## 1. Flujo de transferencia directa (`transfer`)

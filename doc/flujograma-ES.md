@@ -1,5 +1,7 @@
 # Flujograma — ERC-20 Token con EIP-2612 Permit
 
+> English version: [`flujograma-EN.md`](flujograma-EN.md)
+
 Vista general del ciclo de vida del token y las operaciones principales soportadas por el contrato.
 
 ```mermaid
