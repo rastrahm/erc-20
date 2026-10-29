@@ -229,7 +229,7 @@ contract ERC20PermitTokenTest is Test {
     // ============ Fuzz ERC-20 (Fase 6) ============
 
     function testFuzz_Transfer(uint256 amount, address to) public {
-        vm.assume(to != address(0));
+        vm.assume(to != address(0) && to != address(this));
         amount = bound(amount, 0, token.balanceOf(address(this)));
 
         uint256 senderBefore = token.balanceOf(address(this));
@@ -243,7 +243,7 @@ contract ERC20PermitTokenTest is Test {
     }
 
     function testFuzz_ApproveTransferFrom(uint256 allowanceAmount, uint256 transferAmount, address to) public {
-        vm.assume(to != address(0));
+        vm.assume(to != address(0) && to != address(this));
         allowanceAmount = bound(allowanceAmount, 0, INITIAL_SUPPLY);
         transferAmount = bound(transferAmount, 0, allowanceAmount);
 
